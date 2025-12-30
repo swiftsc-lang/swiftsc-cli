@@ -1,21 +1,26 @@
-# SwiftSC-Lang CLI
+# 🛠️ SwiftSC CLI
 
-This directory is reserved for the standalone CLI tool.
+![Version](https://img.shields.io/badge/version-1.0.2--beta-blue)
 
-## Current Implementation
+The primary command-line tool for interacting with the SwiftSC ecosystem.
 
-The CLI is currently implemented in `/swiftsc-compiler/swiftsc-driver/`.
+## 🚀 Commands
 
-## Commands
+- `swiftsc build`: Compile your contracts to WASM.
+- `swiftsc test`: Run the local test suite.
+- `swiftsc check`: Perform static analysis.
+- `swiftsc simulate`: Run contracts in a local simulator.
 
-- `swiftsc init` - Initialize project
-- `swiftsc build` - Compile to WASM
-- `swiftsc check` - Type check
-- `swiftsc test` - Run tests
-- `swiftsc deploy` - Deploy contracts
+## 🛠️ Installation
 
-See `/docs/cli.md` for complete documentation.
+```bash
+cargo install swiftsc-cli
+```
 
-## Future
+## 🤝 Contributing
 
-This directory may be used for a standalone CLI package separate from the compiler workspace.
+See [CONTRIBUTING.md](CONTRIBUTING.md) for details.
+
+## 📄 License
+
+MIT

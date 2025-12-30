@@ -1,1 +1,19 @@
+# Rust / WASM Standard Gitignore
 /target
+/build
+Cargo.lock
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# SwiftSC Specific
+*.wasm
+*.disasm
+*.bin
