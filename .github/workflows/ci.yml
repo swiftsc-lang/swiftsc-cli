@@ -12,8 +12,25 @@ jobs:
     runs-on: ubuntu-latest
     
     steps:
-    - uses: actions/checkout@v3
-    
+    - name: Checkout main repo
+      uses: actions/checkout@v3
+      with:
+        path: ${{ github.event.repository.name }}
+
+    - name: Checkout swiftsc-compiler (dependency)
+      if: github.event.repository.name != 'swiftsc-compiler'
+      uses: actions/checkout@v3
+      with:
+        repository: swiftsc-lang/swiftsc-compiler
+        path: swiftsc-compiler
+
+    - name: Checkout swiftsc-runtime (dependency)
+      if: github.event.repository.name != 'swiftsc-runtime'
+      uses: actions/checkout@v3
+      with:
+        repository: swiftsc-lang/swiftsc-runtime
+        path: swiftsc-runtime
+
     - name: Install Rust
       uses: actions-rs/toolchain@v1
       with:
@@ -22,13 +39,21 @@ jobs:
         components: clippy, rustfmt
     
     - name: Build
-      run: cargo build --release
+      run: |
+        cd ${{ github.event.repository.name }}
+        cargo build --release
       
     - name: Test
-      run: cargo test --all
+      run: |
+        cd ${{ github.event.repository.name }}
+        cargo test --all
       
     - name: Clippy
-      run: cargo clippy -- -D warnings
+      run: |
+        cd ${{ github.event.repository.name }}
+        cargo clippy -- -D warnings
       
     - name: Format Check
-      run: cargo fmt --check
+      run: |
+        cd ${{ github.event.repository.name }}
+        cargo fmt --check

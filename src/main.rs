@@ -1,7 +1,7 @@
-use clap::{Parser, Subcommand};
 use anyhow::{Context, Result};
+use clap::{Parser, Subcommand};
 use std::path::PathBuf;
-use swiftsc_frontend::{tokenize, parse};
+use swiftsc_frontend::{parse, tokenize};
 
 #[derive(Parser)]
 #[command(author, version, about, long_about = None)]
@@ -13,22 +13,22 @@ struct Cli {
 #[derive(Subcommand)]
 enum Commands {
     /// Tokenize a source file
-    Lex {
-        path: PathBuf,
-    },
+    Lex { path: PathBuf },
     /// Parse a source file into AST
-    Parse {
-        path: PathBuf,
-    },
+    Parse { path: PathBuf },
     /// Parse and check semantics
     Check {
         path: PathBuf,
+        #[arg(short, long)]
+        root: Option<PathBuf>,
     },
     /// Compile to WASM
     Build {
         path: PathBuf,
         #[arg(short, long)]
         output: Option<PathBuf>,
+        #[arg(short, long)]
+        root: Option<PathBuf>,
     },
     /// Initialize a new SwiftSC-Lang project
     Init {
@@ -45,6 +45,8 @@ enum Commands {
         path: PathBuf,
         #[arg(short, long)]
         network: String,
+        #[arg(short, long)]
+        root: Option<PathBuf>,
     },
 }
 
@@ -66,59 +68,59 @@ fn main() -> Result<()> {
         Commands::Parse { path } => {
             let content = std::fs::read_to_string(path)
                 .with_context(|| format!("could not read file `{}`", path.display()))?;
-            
+
             println!("--- Parsing: {} ---", path.display());
             match parse(&content) {
                 Ok(ast) => println!("{:#?}", ast),
                 Err(e) => eprintln!("Error: {}", e),
             }
         }
-        Commands::Check { path } => {
-             let content = std::fs::read_to_string(path)
+        Commands::Check { path, root } => {
+            let content = std::fs::read_to_string(path)
                 .with_context(|| format!("could not read file `{}`", path.display()))?;
-             
-             match parse(&content) {
-                Ok(ast) => {
-                    match swiftsc_frontend::analyze(&ast) {
-                        Ok(_) => println!("Semantic Check Passed"),
-                        Err(e) => eprintln!("Semantic Error: {}", e),
-                    }
-                }
+
+            match parse(&content) {
+                Ok(ast) => match swiftsc_frontend::analyze(&ast, root.clone()) {
+                    Ok(_) => println!("Semantic Check Passed"),
+                    Err(e) => eprintln!("Semantic Error: {}", e),
+                },
                 Err(e) => eprintln!("Parse Error: {}", e),
-             }
+            }
         }
-        Commands::Build { path, output } => {
-            let content = std::fs::read_to_string(&path)
+        Commands::Build { path, output, root } => {
+            let content = std::fs::read_to_string(path)
                 .with_context(|| format!("could not read file `{}`", path.display()))?;
-            
+
             println!("--- Compiling: {} ---", path.display());
             match parse(&content) {
-                Ok(ast) => {
-                    match swiftsc_frontend::analyze(&ast) {
-                        Ok(_) => {
-                            match swiftsc_backend::compile(&ast) {
-                                Ok(wasm_bytes) => {
-                                    let output_path = output.clone().unwrap_or_else(|| path.with_extension("wasm"));
-                                    std::fs::write(&output_path, wasm_bytes)
-                                        .with_context(|| format!("could not write output file `{}`", output_path.display()))?;
-                                    println!("Build Successful: {}", output_path.display());
-                                }
-                                Err(e) => eprintln!("Codegen Error: {}", e),
-                            }
+                Ok(ast) => match swiftsc_frontend::analyze(&ast, root.clone()) {
+                    Ok(_) => match swiftsc_backend::compile(&ast) {
+                        Ok(wasm_bytes) => {
+                            let output_path = output
+                                .clone()
+                                .unwrap_or_else(|| path.with_extension("wasm"));
+                            std::fs::write(&output_path, wasm_bytes).with_context(|| {
+                                format!("could not write output file `{}`", output_path.display())
+                            })?;
+                            println!("Build Successful: {}", output_path.display());
                         }
-                        Err(e) => eprintln!("Semantic Error: {}", e),
-                    }
-                }
+                        Err(e) => eprintln!("Codegen Error: {}", e),
+                    },
+                    Err(e) => eprintln!("Semantic Error: {}", e),
+                },
                 Err(e) => eprintln!("Parse Error: {}", e),
             }
         }
         Commands::Init { path } => {
-            println!("--- Initializing SwiftSC-Lang project in: {} ---", path.display());
-            
+            println!(
+                "--- Initializing SwiftSC-Lang project in: {} ---",
+                path.display()
+            );
+
             // Create project structure
             std::fs::create_dir_all(path.join("src"))?;
             std::fs::create_dir_all(path.join("tests"))?;
-            
+
             // Create SwiftSC-Lang.toml
             let config = r#"[package]
 name = "my-contract"
@@ -131,7 +133,7 @@ version = "0.1.0"
 target = "wasm32-unknown-unknown"
 "#;
             std::fs::write(path.join("SwiftSC-Lang.toml"), config)?;
-            
+
             // Create example contract
             let example = r#"contract MyContract {
     fn hello() -> u64 {
@@ -140,7 +142,7 @@ target = "wasm32-unknown-unknown"
 }
 "#;
             std::fs::write(path.join("src/contract.stc"), example)?;
-            
+
             println!("✓ Project initialized successfully!");
             println!("  - SwiftSC-Lang.toml");
             println!("  - src/contract.stc");
@@ -148,7 +150,7 @@ target = "wasm32-unknown-unknown"
         }
         Commands::Test { path } => {
             println!("--- Running tests in: {} ---", path.display());
-            
+
             // Find all test files
             let test_dir = path.join("tests");
             if test_dir.exists() {
@@ -158,26 +160,30 @@ target = "wasm32-unknown-unknown"
                 eprintln!("✗ No tests directory found");
             }
         }
-        Commands::Deploy { path, network } => {
-            println!("--- Deploying contract: {} to {} ---", path.display(), network);
-            
+        Commands::Deploy {
+            path,
+            network,
+            root,
+        } => {
+            println!(
+                "--- Deploying contract: {} to {} ---",
+                path.display(),
+                network
+            );
+
             // First, build the contract
-            let content = std::fs::read_to_string(&path)?;
+            let content = std::fs::read_to_string(path)?;
             match parse(&content) {
-                Ok(ast) => {
-                    match swiftsc_frontend::analyze(&ast) {
-                        Ok(_) => {
-                            match swiftsc_backend::compile(&ast) {
-                                Ok(wasm_bytes) => {
-                                    println!("✓ Contract compiled ({} bytes)", wasm_bytes.len());
-                                    println!("  (Deployment to {} not yet implemented)", network);
-                                }
-                                Err(e) => eprintln!("✗ Compilation failed: {}", e),
-                            }
+                Ok(ast) => match swiftsc_frontend::analyze(&ast, root.clone()) {
+                    Ok(_) => match swiftsc_backend::compile(&ast) {
+                        Ok(wasm_bytes) => {
+                            println!("✓ Contract compiled ({} bytes)", wasm_bytes.len());
+                            println!("  (Deployment to {} not yet implemented)", network);
                         }
-                        Err(e) => eprintln!("✗ Semantic error: {}", e),
-                    }
-                }
+                        Err(e) => eprintln!("✗ Compilation failed: {}", e),
+                    },
+                    Err(e) => eprintln!("✗ Semantic error: {}", e),
+                },
                 Err(e) => eprintln!("✗ Parse error: {}", e),
             }
         }
