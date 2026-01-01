@@ -255,7 +255,7 @@ checksum = "7da8b5736845d9f2fcb837ea5d9e2628564b3b043a70948a3f0b778838c5fb4f"
 
 [[package]]
 name = "swiftsc-backend"
-version = "1.0.2-beta"
+version = "1.0.3-beta"
 dependencies = [
  "anyhow",
  "swiftsc-frontend",
@@ -265,7 +265,7 @@ dependencies = [
 
 [[package]]
 name = "swiftsc-cli"
-version = "1.0.2-beta"
+version = "1.0.3-beta"
 dependencies = [
  "anyhow",
  "clap",
@@ -276,7 +276,7 @@ dependencies = [
 
 [[package]]
 name = "swiftsc-frontend"
-version = "1.0.2-beta"
+version = "1.0.3-beta"
 dependencies = [
  "logos",
  "thiserror",
@@ -284,7 +284,7 @@ dependencies = [
 
 [[package]]
 name = "swiftsc-runtime"
-version = "1.0.2-beta"
+version = "1.0.3-beta"
 dependencies = [
  "anyhow",
  "thiserror",
