@@ -1,6 +1,6 @@
 # 🛠️ SwiftSC CLI
 
-![Version](https://img.shields.io/badge/version-1.0.2--beta-blue)
+![Version](https://img.shields.io/badge/version-1.0.3--beta-blue)
 
 The primary command-line tool for interacting with the SwiftSC ecosystem.
 
