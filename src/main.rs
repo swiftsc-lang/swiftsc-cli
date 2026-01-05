@@ -124,20 +124,35 @@ fn main() -> Result<()> {
             // Create SwiftSC-Lang.toml
             let config = r#"[package]
 name = "my-contract"
-version = "0.1.0"
+version = "1.0.3-beta"
 
 [dependencies]
-# Add dependencies here
+# stdlib is included by default
 
 [build]
 target = "wasm32-unknown-unknown"
+gas_metering = true
 "#;
             std::fs::write(path.join("SwiftSC-Lang.toml"), config)?;
 
             // Create example contract
-            let example = r#"contract MyContract {
-    fn hello() -> u64 {
-        return 42;
+            let example = r#"use std::math::sub;
+use std::collections::HashMap;
+
+contract MyContract {
+    storage balances: HashMap<Address, u64>;
+
+    fn transfer(to: Address, amount: u64) -> Result<()> {
+        let sender = caller();
+        let bal = self.balances.get(sender).unwrap_or(0);
+        
+        // V1.0.3-beta Safe Math
+        let new_bal = sub(bal, amount)?;
+        
+        self.balances.insert(sender, new_bal);
+        self.balances.insert(to, self.balances.get(to).unwrap_or(0) + amount);
+        
+        Ok(())
     }
 }
 "#;
