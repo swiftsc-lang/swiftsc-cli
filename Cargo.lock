@@ -254,8 +254,17 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7da8b5736845d9f2fcb837ea5d9e2628564b3b043a70948a3f0b778838c5fb4f"
 
 [[package]]
+name = "swiftsc-analyzer"
+version = "1.0.3"
+dependencies = [
+ "anyhow",
+ "swiftsc-frontend",
+ "thiserror",
+]
+
+[[package]]
 name = "swiftsc-backend"
-version = "1.0.3-beta"
+version = "1.0.3"
 dependencies = [
  "anyhow",
  "swiftsc-frontend",
@@ -265,10 +274,11 @@ dependencies = [
 
 [[package]]
 name = "swiftsc-cli"
-version = "1.0.3-beta"
+version = "1.0.3"
 dependencies = [
  "anyhow",
  "clap",
+ "swiftsc-analyzer",
  "swiftsc-backend",
  "swiftsc-frontend",
  "swiftsc-runtime",
@@ -276,7 +286,7 @@ dependencies = [
 
 [[package]]
 name = "swiftsc-frontend"
-version = "1.0.3-beta"
+version = "1.0.3"
 dependencies = [
  "logos",
  "thiserror",
@@ -284,7 +294,7 @@ dependencies = [
 
 [[package]]
 name = "swiftsc-runtime"
-version = "1.0.3-beta"
+version = "1.0.3"
 dependencies = [
  "anyhow",
  "thiserror",
