@@ -193,7 +193,10 @@ contract MyContract {
                         println!("Pass 2: Integer Overflow Check");
                         println!("Pass 3: Uninitialized Storage Check");
                     }
-                    let warnings = swiftsc_analyzer::SecurityAnalyzer::analyze(&ast);
+                    let mut security_analyzer = swiftsc_analyzer::SecurityAnalyzer::new();
+                    security_analyzer.analyze_program(&ast);
+                    let warnings = security_analyzer.get_warnings();
+
                     if warnings.is_empty() {
                         println!("✓ No security issues found.");
                     } else {
@@ -205,6 +208,14 @@ contract MyContract {
                 }
                 Err(e) => eprintln!("✗ Parse error: {}", e),
             }
+        }
+        Commands::Deploy {
+            path,
+            network,
+            root: _,
+        } => {
+            println!("--- Deploying: {} to {} ---", path.display(), network);
+            println!("  (Deployment logic not yet implemented for V1.0.3 stable)");
         }
     }
 
