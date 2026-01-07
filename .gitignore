@@ -1,7 +1,6 @@
 # Rust / WASM Standard Gitignore
 /target
 /build
-Cargo.lock
 
 # IDE
 .vscode/

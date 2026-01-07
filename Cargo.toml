@@ -1,6 +1,6 @@
 [package]
 name = "swiftsc-cli"
-version = "1.0.3-beta"
+version = "1.0.3"
 edition = "2021"
 authors = ["SwiftSC-Lang Contributors"]
 description = "Command-line interface for SwiftSC-Lang compiler"
@@ -15,9 +15,10 @@ path = "src/main.rs"
 clap = { version = "4.5", features = ["derive"] }
 anyhow = "1.0"
 
-# Dependencies from other repositories
-swiftsc-frontend = { version = "1.0.3-beta", path = "../swiftsc-compiler/frontend" }
-swiftsc-backend = { version = "1.0.3-beta", path = "../swiftsc-compiler/backend" }
-swiftsc-runtime = { version = "1.0.3-beta", path = "../swiftsc-runtime" }
+# Dependencies from crates.io
+swiftsc-frontend = "1.0.3"
+swiftsc-backend = "1.0.3"
+swiftsc-runtime = "1.0.3"
+swiftsc-analyzer = "1.0.3"
 
 [dev-dependencies]

@@ -48,6 +48,12 @@ enum Commands {
         #[arg(short, long)]
         root: Option<PathBuf>,
     },
+    /// Run security analysis
+    Analyze {
+        path: PathBuf,
+        #[arg(short, long)]
+        verbose: bool,
+    },
 }
 
 fn main() -> Result<()> {
@@ -124,7 +130,7 @@ fn main() -> Result<()> {
             // Create SwiftSC-Lang.toml
             let config = r#"[package]
 name = "my-contract"
-version = "1.0.3-beta"
+version = "1.0.3"
 
 [dependencies]
 # stdlib is included by default
@@ -146,7 +152,7 @@ contract MyContract {
         let sender = caller();
         let bal = self.balances.get(sender).unwrap_or(0);
         
-        // V1.0.3-beta Safe Math
+        // V1.0.3 Safe Math
         let new_bal = sub(bal, amount)?;
         
         self.balances.insert(sender, new_bal);
@@ -175,32 +181,41 @@ contract MyContract {
                 eprintln!("✗ No tests directory found");
             }
         }
+        Commands::Analyze { path, verbose } => {
+            let content = std::fs::read_to_string(path)
+                .with_context(|| format!("could not read file `{}`", path.display()))?;
+
+            match parse(&content) {
+                Ok(ast) => {
+                    if *verbose {
+                        println!("--- Analyzing AST: {} ---", path.display());
+                        println!("Pass 1: Reentrancy Detection");
+                        println!("Pass 2: Integer Overflow Check");
+                        println!("Pass 3: Uninitialized Storage Check");
+                    }
+                    let mut security_analyzer = swiftsc_analyzer::SecurityAnalyzer::new();
+                    security_analyzer.analyze_program(&ast);
+                    let warnings = security_analyzer.get_warnings();
+
+                    if warnings.is_empty() {
+                        println!("✓ No security issues found.");
+                    } else {
+                        println!("⚠️ Found {} security warnings:", warnings.len());
+                        for warning in warnings {
+                            println!("  - {:?}", warning);
+                        }
+                    }
+                }
+                Err(e) => eprintln!("✗ Parse error: {}", e),
+            }
+        }
         Commands::Deploy {
             path,
             network,
-            root,
+            root: _,
         } => {
-            println!(
-                "--- Deploying contract: {} to {} ---",
-                path.display(),
-                network
-            );
-
-            // First, build the contract
-            let content = std::fs::read_to_string(path)?;
-            match parse(&content) {
-                Ok(ast) => match swiftsc_frontend::analyze(&ast, root.clone()) {
-                    Ok(_) => match swiftsc_backend::compile(&ast) {
-                        Ok(wasm_bytes) => {
-                            println!("✓ Contract compiled ({} bytes)", wasm_bytes.len());
-                            println!("  (Deployment to {} not yet implemented)", network);
-                        }
-                        Err(e) => eprintln!("✗ Compilation failed: {}", e),
-                    },
-                    Err(e) => eprintln!("✗ Semantic error: {}", e),
-                },
-                Err(e) => eprintln!("✗ Parse error: {}", e),
-            }
+            println!("--- Deploying: {} to {} ---", path.display(), network);
+            println!("  (Deployment logic not yet implemented for V1.0.3 stable)");
         }
     }
 
